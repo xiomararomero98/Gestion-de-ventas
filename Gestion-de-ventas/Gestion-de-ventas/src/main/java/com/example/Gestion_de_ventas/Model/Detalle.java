@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -37,4 +38,7 @@ public class Detalle {
     @ManyToOne
     @JoinColumn(name = "Venta_id_venta", nullable = false)
     private Venta venta;
+
+    @Transient
+    private String nombreProducto;
 }

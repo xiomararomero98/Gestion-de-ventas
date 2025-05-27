@@ -18,17 +18,17 @@ public class VentaController {
     @Autowired
     private VentaService ventaService;
 
-    // Obtener todas las ventas
+    // Obtener todas las ventas con datos externos
     @GetMapping
     public ResponseEntity<List<Venta>> obtenerVentas() {
-        List<Venta> ventas = ventaService.obtenerTodasLasVentas();
+        List<Venta> ventas = ventaService.obtenerTodasLasVentas(); // el método ya carga los datos externos
         if (ventas.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(ventas);
     }
 
-    // Obtener venta por ID
+    // Obtener venta por ID con datos externos
     @GetMapping("/{id}")
     public ResponseEntity<?> obtenerVentaPorId(@PathVariable Long id) {
         Optional<Venta> venta = ventaService.obtenerVentaPorId(id);

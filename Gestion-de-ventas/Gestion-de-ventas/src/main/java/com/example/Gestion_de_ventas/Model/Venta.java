@@ -1,3 +1,4 @@
+
 package com.example.Gestion_de_ventas.Model;
 
 import java.util.Date;
@@ -37,5 +38,4 @@ public class Venta{
 
     @Transient
     private String direccionCompleta; // lo mismo
-
 }

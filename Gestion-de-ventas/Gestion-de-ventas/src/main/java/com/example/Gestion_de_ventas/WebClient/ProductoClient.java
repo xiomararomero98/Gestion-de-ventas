@@ -23,6 +23,8 @@ public class ProductoClient {
                                 .map(body -> new RuntimeException("Producto no encontrado")))
                 .bodyToMono(Map.class)
                 .block();
+
+                
     }
 }
 
