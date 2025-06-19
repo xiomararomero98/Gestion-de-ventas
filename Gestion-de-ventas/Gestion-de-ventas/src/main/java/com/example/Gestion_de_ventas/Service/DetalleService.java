@@ -10,9 +10,7 @@ import com.example.Gestion_de_ventas.Model.Detalle;
 import com.example.Gestion_de_ventas.Model.Venta;
 import com.example.Gestion_de_ventas.Repository.DetalleRepository;
 import com.example.Gestion_de_ventas.Repository.VentaRepository;
-import com.example.Gestion_de_ventas.WebClient.DireccionClient;
 import com.example.Gestion_de_ventas.WebClient.ProductoClient;
-import com.example.Gestion_de_ventas.WebClient.UsuarioClient;
 
 @Service
 public class DetalleService {
@@ -24,89 +22,52 @@ public class DetalleService {
     private VentaRepository ventaRepository;
 
     @Autowired
-    private UsuarioClient usuarioClient;
 
-    @Autowired
-    private DireccionClient direccionClient;
-
-
-
-    @Autowired
     private ProductoClient productoClient;
 
-    public List<Detalle> obtenerTodosLosDetalles() {
-        return detalleRepository.findAll();
+     public List<Detalle> obtenerTodos() {
+        List<Detalle> detalles = detalleRepository.findAll();
+        detalles.forEach(this::enriquecer);
+        return detalles;
     }
 
-    public Optional<Detalle> obtenerDetallePorId(Long id) {
+    public Optional<Detalle> obtenerPorId(Long id) {
         return detalleRepository.findById(id);
     }
-    public Detalle crearDetalle(Detalle nuevoDetalle) {
-    // Validar producto por WebClient
-    var producto = productoClient.getProductoById(nuevoDetalle.getProductoId());
-    if (producto == null || producto.isEmpty()) {
-        throw new RuntimeException("Producto no encontrado con ID: " + nuevoDetalle.getProductoId());
-    }
 
-    // Cargar la venta completa desde la BD
-    Long idVenta = nuevoDetalle.getVenta().getId();
-    Venta ventaCompleta = ventaRepository.findById(idVenta)
-        .orElseThrow(() -> new RuntimeException("Venta no encontrada con ID: " + idVenta));
-
-    // Asociar la venta completa al detalle
-    nuevoDetalle.setVenta(ventaCompleta);
-
-    return detalleRepository.save(nuevoDetalle);
-}
-
-
-
-    public Detalle actualizarDetalle(Long id, Detalle datosActualizados) {
-        Optional<Detalle> optional = detalleRepository.findById(id);
-        if (optional.isPresent()) {
-            Detalle existente = optional.get();
-            existente.setCantidad(datosActualizados.getCantidad());
-            existente.setSubtotal(datosActualizados.getSubtotal());
-            existente.setProductoId(datosActualizados.getProductoId());
-            existente.setVenta(datosActualizados.getVenta());
-            return detalleRepository.save(existente);
-        } else {
-            throw new RuntimeException("Detalle no encontrado con ID: " + id);
-        }
-    }
-
-    public void eliminarDetalle(Long id) {
-        detalleRepository.deleteById(id);
-    }
-
-     public List<Detalle> obtenerDetallesConVentaCompleta() {
-        List<Detalle> detalles = detalleRepository.findAll();
-
-        for (Detalle d : detalles) {
-            Venta venta = d.getVenta();
-            if (venta != null) {
-                // Obtener nombre del usuario
-                var usuario = usuarioClient.getUsuarioById(venta.getUsuarioId());
-                if (usuario != null && usuario.containsKey("nombre")) {
-                    venta.setNombreUsuario(usuario.get("nombre").toString());
-                } else {
-                    venta.setNombreUsuario("Desconocido");
-                }
-
-                // Obtener dirección completa
-                var direccion = direccionClient.getDireccionById(venta.getDireccionId());
-                if (direccion != null && direccion.containsKey("calle")) {
-                    String calle = direccion.get("calle").toString();
-                    String numero = direccion.get("numeracion") != null ? direccion.get("numeracion").toString() : "";
-                    venta.setDireccionCompleta(calle + " " + numero);
-                } else {
-                    venta.setDireccionCompleta("Desconocida");
-                }
-
-                d.setVenta(venta); // Asegura que la venta se actualice en el objeto Detalle
-            }
-        }
-
+    public List<Detalle> obtenerPorVenta(Long ventaId) {
+        List<Detalle> detalles = detalleRepository.findByVentaId(ventaId);
+        detalles.forEach(this::enriquecer);
         return detalles;
+    }
+
+    public Detalle crearDetalle(Detalle detalle) {
+        var producto = productoClient.getProductoById(detalle.getProductoId());
+        if (producto == null || producto.isEmpty()) throw new RuntimeException("Producto no encontrado");
+        Venta venta = ventaRepository.findById(detalle.getVenta().getId())
+            .orElseThrow(() -> new RuntimeException("Venta no encontrada"));
+        detalle.setVenta(venta);
+        return detalleRepository.save(detalle);
+    }
+
+    public Detalle actualizarDetalle(Long id, Detalle nuevo) {
+        return detalleRepository.findById(id).map(d -> {
+            d.setCantidad(nuevo.getCantidad());
+            d.setSubtotal(nuevo.getSubtotal());
+            d.setProductoId(nuevo.getProductoId());
+            d.setVenta(nuevo.getVenta());
+            return detalleRepository.save(d);
+        }).orElseThrow(() -> new RuntimeException("Detalle no encontrado"));
+    }
+
+    public void eliminarDetalle(Long id) { detalleRepository.deleteById(id); }
+
+    private void enriquecer(Detalle d) {
+        try {
+            var prod = productoClient.getProductoById(d.getProductoId());
+            d.setNombreProducto(prod.get("nombre").toString());
+        } catch (Exception e) {
+            d.setNombreProducto("No disponible");
+        }
     }
 }

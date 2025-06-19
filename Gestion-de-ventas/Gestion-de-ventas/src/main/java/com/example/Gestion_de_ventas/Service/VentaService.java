@@ -25,76 +25,49 @@ public class VentaService {
 
     public List<Venta> obtenerTodasLasVentas() {
         List<Venta> ventas = ventaRepository.findAll();
-        for (Venta venta : ventas) {
-            cargarDatosExternos(venta);
-        }
+        ventas.forEach(this::cargarDatosExternos);
         return ventas;
     }
 
     public Optional<Venta> obtenerVentaPorId(Long id) {
-        Optional<Venta> optional = ventaRepository.findById(id);
-        if (optional.isPresent()) {
-            Venta venta = optional.get();
-            cargarDatosExternos(venta);
-            return Optional.of(venta);
-        } else {
-            return Optional.empty();
-        }
+        Optional<Venta> venta = ventaRepository.findById(id);
+        venta.ifPresent(this::cargarDatosExternos);
+        return venta;
     }
 
-    public Venta crearVenta(Venta nuevaVenta) {
-        try {
-            var usuario = usuarioClient.getUsuarioById(nuevaVenta.getUsuarioId());
-            System.out.println("Respuesta del microservicio Usuario: " + usuario);
-        } catch (Exception e) {
-            throw new RuntimeException("Fallo al contactar al microservicio de Usuario: " + e.getMessage());
-        }
-
-        return ventaRepository.save(nuevaVenta);
+    public List<Venta> obtenerVentasPorUsuario(Long usuarioId) {
+        List<Venta> ventas = ventaRepository.findByUsuarioId(usuarioId);
+        ventas.forEach(this::cargarDatosExternos);
+        return ventas;
     }
 
-    public Venta actualizarVenta(Long id, Venta datosActualizados) {
-        Optional<Venta> optional = ventaRepository.findById(id);
-        if (optional.isPresent()) {
-            Venta ventaExistente = optional.get();
-            ventaExistente.setFechaVenta(datosActualizados.getFechaVenta());
-            ventaExistente.setTotal(datosActualizados.getTotal());
-            ventaExistente.setUsuarioId(datosActualizados.getUsuarioId());
-            ventaExistente.setDireccionId(datosActualizados.getDireccionId());
-            return ventaRepository.save(ventaExistente);
-        } else {
-            throw new RuntimeException("Venta no encontrada con ID: " + id);
-        }
+    public Venta crearVenta(Venta venta) {
+        var usuario = usuarioClient.getUsuarioById(venta.getUsuarioId());
+        if (usuario == null || usuario.isEmpty()) throw new RuntimeException("Usuario no encontrado");
+        return ventaRepository.save(venta);
     }
 
-    public void eliminarVenta(Long id) {
-        ventaRepository.deleteById(id);
+    public Venta actualizarVenta(Long id, Venta datos) {
+        return ventaRepository.findById(id).map(v -> {
+            v.setFechaVenta(datos.getFechaVenta());
+            v.setTotal(datos.getTotal());
+            v.setUsuarioId(datos.getUsuarioId());
+            v.setDireccionId(datos.getDireccionId());
+            return ventaRepository.save(v);
+        }).orElseThrow(() -> new RuntimeException("Venta no encontrada"));
     }
 
-    // Método reutilizable para cargar usuario y dirección
+    public void eliminarVenta(Long id) { ventaRepository.deleteById(id); }
+
     private void cargarDatosExternos(Venta venta) {
         try {
             var usuario = usuarioClient.getUsuarioById(venta.getUsuarioId());
-            if (usuario != null && usuario.containsKey("nombre")) {
-                venta.setNombreUsuario(usuario.get("nombre").toString());
-            } else {
-                venta.setNombreUsuario("Desconocido");
-            }
-        } catch (Exception e) {
-            venta.setNombreUsuario("Error al obtener usuario");
-        }
+            venta.setNombreUsuario(usuario.get("nombre").toString());
+        } catch (Exception e) { venta.setNombreUsuario("Desconocido"); }
 
         try {
             var direccion = direccionClient.getDireccionById(venta.getDireccionId());
-            if (direccion != null && direccion.containsKey("calle")) {
-                String calle = direccion.get("calle").toString();
-                String numero = direccion.get("numeracion") != null ? direccion.get("numeracion").toString() : "";
-                venta.setDireccionCompleta(calle + " " + numero);
-            } else {
-                venta.setDireccionCompleta("Desconocida");
-            }
-        } catch (Exception e) {
-            venta.setDireccionCompleta("Error al obtener dirección");
-        }
+            venta.setDireccionCompleta(direccion.get("calle") + " " + direccion.get("numeracion"));
+        } catch (Exception e) { venta.setDireccionCompleta("Desconocida"); }
     }
 }

@@ -2,6 +2,7 @@
 package com.example.Gestion_de_ventas.Model;
 
 import java.util.Date;
+import java.util.List;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -15,6 +16,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Venta{
 
+ 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_venta")
@@ -33,9 +35,12 @@ public class Venta{
     @Column(name = "Direcccion_id_direccion", nullable = false)
     private Long direccionId;
 
-    @Transient
-    private String nombreUsuario; // lo puedes completar luego con WebClient
+    @OneToMany(mappedBy = "venta", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Detalle> detalles;
 
     @Transient
-    private String direccionCompleta; // lo mismo
+    private String nombreUsuario;
+
+    @Transient
+    private String direccionCompleta;
 }

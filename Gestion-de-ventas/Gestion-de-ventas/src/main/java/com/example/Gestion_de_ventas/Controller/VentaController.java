@@ -7,8 +7,7 @@ import com.example.Gestion_de_ventas.Model.Venta;
 import com.example.Gestion_de_ventas.Service.VentaService;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,19 +17,17 @@ public class VentaController {
     @Autowired
     private VentaService ventaService;
 
-    // Obtener todas las ventas con datos externos
     @GetMapping
-    public ResponseEntity<List<Venta>> obtenerVentas() {
-        List<Venta> ventas = ventaService.obtenerTodasLasVentas(); // el método ya carga los datos externos
-        if (ventas.isEmpty()) {
+    public ResponseEntity<List<Venta>> getAll() {
+        List<Venta> lista = ventaService.obtenerTodasLasVentas();
+        if (lista.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
-        return ResponseEntity.ok(ventas);
+        return ResponseEntity.ok(lista);
     }
 
-    // Obtener venta por ID con datos externos
     @GetMapping("/{id}")
-    public ResponseEntity<?> obtenerVentaPorId(@PathVariable Long id) {
+    public ResponseEntity<?> getById(@PathVariable Long id) {
         Optional<Venta> venta = ventaService.obtenerVentaPorId(id);
         if (venta.isPresent()) {
             return ResponseEntity.ok(venta.get());
@@ -39,36 +36,35 @@ public class VentaController {
         }
     }
 
-    // Crear nueva venta
+    @GetMapping("/usuario/{usuarioId}")
+    public ResponseEntity<List<Venta>> getByUsuario(@PathVariable Long usuarioId) {
+        List<Venta> lista = ventaService.obtenerVentasPorUsuario(usuarioId);
+        return ResponseEntity.ok(lista);
+    }
+
     @PostMapping
-    public ResponseEntity<?> crearVenta(@RequestBody Venta venta) {
+    public ResponseEntity<?> crear(@RequestBody Venta venta) {
         try {
-            Venta nueva = ventaService.crearVenta(venta);
-            return ResponseEntity.status(HttpStatus.CREATED).body(nueva);
+            Venta creada = ventaService.crearVenta(venta);
+            return ResponseEntity.status(HttpStatus.CREATED).body(creada);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error al crear la venta: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Error al crear venta: " + e.getMessage());
         }
     }
 
-    // Actualizar una venta existente
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizarVenta(@PathVariable Long id, @RequestBody Venta datos) {
+    public ResponseEntity<?> actualizar(@PathVariable Long id, @RequestBody Venta v) {
         try {
-            Venta actualizada = ventaService.actualizarVenta(id, datos);
+            Venta actualizada = ventaService.actualizarVenta(id, v);
             return ResponseEntity.ok(actualizada);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error al actualizar la venta: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error al actualizar venta: " + e.getMessage());
         }
     }
 
-    // Eliminar venta por ID
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminarVenta(@PathVariable Long id) {
-        try {
-            ventaService.eliminarVenta(id);
-            return ResponseEntity.noContent().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error al eliminar la venta: " + e.getMessage());
-        }
+    public ResponseEntity<?> eliminar(@PathVariable Long id) {
+        ventaService.eliminarVenta(id);
+        return ResponseEntity.noContent().build();
     }
 }

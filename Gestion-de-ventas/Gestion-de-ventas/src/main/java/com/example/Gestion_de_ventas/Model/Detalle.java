@@ -2,6 +2,7 @@ package com.example.Gestion_de_ventas.Model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -21,7 +22,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Detalle {
 
-    @Id
+  @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_detalle")
     private Long id;
@@ -35,7 +36,7 @@ public class Detalle {
     @Column(name = "Producto_id_producto", nullable = false)
     private Long productoId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "Venta_id_venta", nullable = false)
     private Venta venta;
 
