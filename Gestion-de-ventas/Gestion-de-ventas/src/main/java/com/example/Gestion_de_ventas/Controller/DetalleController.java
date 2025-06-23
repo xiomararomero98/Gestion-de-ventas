@@ -1,14 +1,13 @@
 package com.example.Gestion_de_ventas.Controller;
-
-import java.util.List;
-import java.util.Optional;
-
 import com.example.Gestion_de_ventas.Model.Detalle;
 import com.example.Gestion_de_ventas.Service.DetalleService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/detalles")
@@ -25,16 +24,17 @@ public class DetalleController {
         }
         return ResponseEntity.ok(lista);
     }
-
+    
     @GetMapping("/{id}")
     public ResponseEntity<?> getById(@PathVariable Long id) {
-        Optional<Detalle> detalle = detalleService.obtenerPorId(id);
-        if (detalle.isPresent()) {
-            return ResponseEntity.ok(detalle.get());
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Detalle no encontrado con ID: " + id);
-        }
+    Optional<Detalle> detalle = detalleService.obtenerPorId(id);
+    if (detalle.isPresent()) {
+        return ResponseEntity.ok(detalle.get());
+    } else {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Detalle no encontrado con ID: " + id);
     }
+}
+
 
     @GetMapping("/venta/{ventaId}")
     public ResponseEntity<List<Detalle>> getByVenta(@PathVariable Long ventaId) {
@@ -53,14 +53,14 @@ public class DetalleController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizar(@PathVariable Long id, @RequestBody Detalle d) {
+    public ResponseEntity<?> actualizarDetalle(@PathVariable Long id, @RequestBody Detalle datos) {
         try {
-            Detalle actualizado = detalleService.actualizarDetalle(id, d);
+            Detalle actualizado = detalleService.actualizarDetalle(id, datos);
             return ResponseEntity.ok(actualizado);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error al actualizar detalle: " + e.getMessage());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Error: " + e.getMessage());
         }
-    }
+    }   
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> eliminar(@PathVariable Long id) {

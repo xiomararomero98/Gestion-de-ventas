@@ -26,5 +26,15 @@ public class ProductoClient {
 
                 
     }
+
+    public boolean existeProducto(Long id) {
+    try {
+        var producto = getProductoById(id);
+        return producto != null;
+    } catch (Exception e) {
+        return false;
+    }
+}
+
 }
 
