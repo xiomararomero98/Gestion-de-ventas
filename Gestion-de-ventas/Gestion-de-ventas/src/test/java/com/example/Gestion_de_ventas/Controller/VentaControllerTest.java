@@ -127,4 +127,18 @@ public class VentaControllerTest {
 
         Mockito.verify(ventaService).eliminarVenta(1L);
     }
+
+    @Test
+    void testActualizarVentaNotFound() throws Exception {
+    Venta venta = new Venta();
+    venta.setTotal(5000);
+
+    Mockito.when(ventaService.actualizarVenta(Mockito.eq(999L), Mockito.any(Venta.class)))
+           .thenThrow(new RuntimeException("Venta no encontrada"));
+
+    mockMvc.perform(put("/api/v1/ventas/999")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(venta)))
+            .andExpect(status().isNotFound());
+}
 }
